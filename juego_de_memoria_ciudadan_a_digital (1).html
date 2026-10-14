@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ciudadanía Digital: Memoria Dinámica</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            cyber: {
+              bg: '#0f172a',
+              card: '#1e293b',
+              accent: '#38bdf8',
+              neon: '#818cf8',
+              warning: '#f43f5e',
+              success: '#10b981',
+              gold: '#fbbf24'
+            }
+          },
+          animation: {
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'glitch': 'glitch 0.3s ease-in-out',
+            'float': 'float 3s ease-in-out infinite'
+          },
+          keyframes: {
+            glitch: {
+              '0%, 100%': { transform: 'translate(0)' },
+              '20%': { transform: 'translate(-3px, 3px)' },
+              '40%': { transform: 'translate(-3px, -3px)' },
+              '60%': { transform: 'translate(3px, 3px)' },
+              '80%': { transform: 'translate(3px, -3px)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-6px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* 3D Card Flip setup */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Grid layout positioning transition for smooth swapping */
+    .card-wrapper {
+      transition: all 0.4s ease-in-out;
+    }
+
+    /* Background animated gradient grid */
+    .cyber-bg {
+      background-color: #0b1120;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(129, 140, 248, 0.12) 0px, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+  </style>
+</head>
+
+<body class="cyber-bg text-slate-100 min-h-screen flex flex-col font-sans select-none overflow-x-hidden">
+
+  <header class="w-full border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-shield-halved text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+            Memoria Digital
+          </h1>
+          <p class="text-xs text-slate-400 flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Ciudadanía & Seguridad Web
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick controls & Sound toggle -->
+      <div class="flex items-center gap-2">
+        <button id="sound-btn" class="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 transition-colors border border-slate-700" title="Activar/Desactivar Sonido">
+          <i class="fa-solid fa-volume-high text-lg"></i>
+        </button>
+        <button id="info-btn" class="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 transition-colors border border-slate-700" title="Reglas y Conceptos">
+          <i class="fa-solid fa-circle-question text-lg"></i>
+        </button>
+        <button id="restart-btn" class="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span class="hidden sm:inline">Nuevo Juego</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 flex flex-col gap-6">
+
+    <!-- Control Bar & Mode Selector -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      
+      <!-- Dynamic Mechanic Selector -->
+      <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/70 rounded-2xl p-4 shadow-xl flex flex-col justify-between">
+        <label class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-2 block flex items-center gap-2">
+          <i class="fa-solid fa-shuffle"></i> Modo Dinámico (Cambio de Cartas)
+        </label>
+        <select id="mode-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-all cursor-pointer">
+          <option value="dynamic-click">⚡ Algoritmo Cambiante (Se mueven al tocar)</option>
+          <option value="dynamic-mismatch">⚠️ Efecto Glitch (Cambian tras cada error)</option>
+          <option value="classic">🛡️ Modo Clásico (Tablero Estático)</option>
+        </select>
+        <span id="mode-desc" class="text-xs text-slate-400 mt-2 leading-relaxed">
+          ¡Cuidado! Cada vez que haces clic en una carta, las demás no reveladas cambian de posición en el tablero.
+        </span>
+      </div>
+
+      <!-- Difficulty Selector -->
+      <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/70 rounded-2xl p-4 shadow-xl flex flex-col justify-between">
+        <label class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-2 block flex items-center gap-2">
+          <i class="fa-solid fa-layer-group"></i> Dificultad / Conceptos
+        </label>
+        <select id="difficulty-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-all cursor-pointer">
+          <option value="easy">Fácil (6 Pares / 12 Cartas)</option>
+          <option value="medium" selected>Normal (8 Pares / 16 Cartas)</option>
+          <option value="hard">Desafío (10 Pares / 20 Cartas)</option>
+        </select>
+        <span class="text-xs text-slate-400 mt-2">
+          A mayor dificultad, más conceptos de seguridad y netiqueta aprenderás.
+        </span>
+      </div>
+
+      <!-- Stats Display Dashboard -->
+      <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/70 rounded-2xl p-4 shadow-xl grid grid-cols-3 gap-2 text-center items-center">
+        <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-700/50">
+          <div class="text-xs text-slate-400 font-medium">Movimientos</div>
+          <div id="moves-count" class="text-xl sm:text-2xl font-bold text-cyan-400">0</div>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-700/50">
+          <div class="text-xs text-slate-400 font-medium">Pares</div>
+          <div id="pairs-count" class="text-xl sm:text-2xl font-bold text-emerald-400">0 / 8</div>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-700/50">
+          <div class="text-xs text-slate-400 font-medium">Tiempo</div>
+          <div id="timer" class="text-xl sm:text-2xl font-bold text-indigo-400">00:00</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Citizenship Score & Power Bar -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          Reputación Digital:
+        </div>
+        <span id="rank-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">
+          Navegante Novato
+        </span>
+      </div>
+
+      <div class="flex-1 max-w-md w-full flex items-center gap-3">
+        <div class="flex-1 bg-slate-800 rounded-full h-3 overflow-hidden p-0.5 border border-slate-700">
+          <div id="power-bar" class="bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-500 w-0"></div>
+        </div>
+        <span id="score-text" class="text-sm font-bold text-slate-300 min-w-[60px] text-right">0 pts</span>
+      </div>
+
+      <div id="streak-tag" class="hidden text-xs font-bold px-2 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-bounce">
+        🔥 Racha x<span id="streak-num">1</span>
+      </div>
+    </div>
+
+    <!-- Memory Game Grid Container -->
+    <div class="flex-1 flex items-center justify-center relative min-h-[380px]">
+      
+      <!-- Dynamic notification banner -->
+      <div id="event-toast" class="absolute top-2 z-20 opacity-0 transform -translate-y-4 transition-all duration-300 pointer-events-none px-4 py-2 rounded-full bg-cyan-500/90 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/30 flex items-center gap-2">
+        <i class="fa-solid fa-bolt"></i>
+        <span id="toast-msg">¡El algoritmo ha redistribuido las cartas!</span>
+      </div>
+
+      <div id="game-grid" class="w-full grid gap-3 sm:gap-4 transition-all duration-300 my-auto">
+        <!-- Cards injected dynamically via JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Educational Popup Modal on Pair Match -->
+  <div id="concept-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-3xl p-6 shadow-2xl transform scale-95 transition-transform duration-300 relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl"></div>
+      
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div class="flex items-center gap-3">
+          <div id="modal-icon-bg" class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-2xl border border-cyan-500/30">
+            <i id="modal-icon" class="fa-solid fa-shield"></i>
+          </div>
+          <div>
+            <span class="text-xs font-bold text-cyan-400 uppercase tracking-widest">¡Pareja Encontrada!</span>
+            <h2 id="modal-title" class="text-xl font-bold text-white">Nombre del Concepto</h2>
+          </div>
+        </div>
+      </div>
+
+      <p id="modal-description" class="text-slate-300 text-sm leading-relaxed mb-6 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+        Descripción educacional detallada sobre la ciudadanía digital.
+      </p>
+
+      <!-- Interactive Mini-Question for Bonus Points -->
+      <div id="quiz-container" class="mb-6 bg-indigo-950/40 border border-indigo-800/50 rounded-2xl p-4">
+        <p class="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-lightbulb text-amber-400"></i> Pregunta de Refuerzo (+100 pts extra):
+        </p>
+        <p id="quiz-question" class="text-sm font-semibold text-slate-200 mb-3">¿Pregunta?</p>
+        <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <!-- Options rendered via JS -->
+        </div>
+        <div id="quiz-feedback" class="hidden text-xs font-semibold mt-2 text-center p-1.5 rounded"></div>
+      </div>
+
+      <button id="close-modal-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
+        <span>Continuar Jugando</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Victory Game Over Modal -->
+  <div id="victory-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-700 max-w-md w-full rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+      <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-emerald-400 flex items-center justify-center text-slate-950 text-4xl mx-auto mb-4 shadow-lg shadow-amber-500/20 animate-float">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+
+      <h2 class="text-2xl font-extrabold text-white mb-1">¡Misión Completada!</h2>
+      <p class="text-slate-400 text-sm mb-6">Demostraste ser un verdadero Ciudadano Digital responsable.</p>
+
+      <div class="bg-slate-800/70 border border-slate-700/80 rounded-2xl p-4 mb-6 grid grid-cols-2 gap-3 text-left">
+        <div>
+          <span class="text-xs text-slate-400 block">Puntaje Total:</span>
+          <span id="final-score" class="text-xl font-bold text-cyan-400">0 pts</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block">Tiempo Usado:</span>
+          <span id="final-time" class="text-xl font-bold text-indigo-400">00:00</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block">Movimientos:</span>
+          <span id="final-moves" class="text-xl font-bold text-slate-200">0</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 block">Rango Obtenido:</span>
+          <span id="final-rank" class="text-xs font-bold text-emerald-400">Guardián Digital</span>
+        </div>
+      </div>
+
+      <button id="victory-replay-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-extrabold transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-rotate-right"></i>
+        <span>Jugar de Nuevo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Information / Rules Modal -->
+  <div id="info-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-cyan-400"></i>
+          ¿Cómo jugar y aprender?
+        </h3>
+        <button id="close-info-btn" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-slate-300 text-sm leading-relaxed">
+        <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700">
+          <h4 class="font-semibold text-cyan-300 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-shuffle"></i> El Efecto Algoritmo (Mecánica Única)
+          </h4>
+          <p class="text-xs text-slate-400">
+            En el modo <b>Algoritmo Cambiante</b>, cada vez que seleccionas una carta, el resto de las cartas ocultas se reordenan dinámicamente. Esto simula cómo los entornos digitales y los feeds cambian constantemente según nuestras interacciones.
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="font-semibold text-white">Pilares de la Ciudadanía Digital en el juego:</h4>
+          <ul class="list-disc list-inside text-xs text-slate-400 space-y-1.5 pl-1">
+            <li><b>Huella Digital:</b> Todo lo que compartes en internet deja un rastro duradero.</li>
+            <li><b>Netiqueta:</b> Normas de respeto, amabilidad y convivencia en comunidades online.</li>
+            <li><b>Pensamiento Crítico:</b> Verificar la veracidad de la información para evitar Fake News.</li>
+            <li><b>Ciberseguridad:</b> Uso de contraseñas complejas y autenticación de dos factores.</li>
+            <li><b>Privacidad:</b> Protección de datos personales y ubicación ante desconocidos.</li>
+            <li><b>Empatía Digital:</b> Promover un entorno libre de ciberacoso (Cyberbullying).</li>
+          </ul>
+        </div>
+      </div>
+
+      <button id="start-rules-btn" class="w-full mt-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold border border-slate-700 transition-colors">
+        ¡Entendido!
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* --- DIGITAL CITIZENSHIP CONCEPTS DATABASE --- */
+    const CONCEPTS_DATABASE = [
+      {
+        id: 'huella',
+        title: 'Huella Digital',
+        icon: 'fa-shoe-prints',
+        color: 'from-amber-500 to-orange-600',
+        textColor: 'text-amber-400',
+        description: 'La huella digital es el rastro de datos que dejas al navegar en internet (comentarios, fotos, likes y búsquedas). Es permanente y construye tu reputación online.',
+        question: '¿Qué ocurre con las publicaciones que borras en redes sociales?',
+        options: [
+          { text: 'Pueden permanecer en servidores o capturas de otros.', correct: true },
+          { text: 'Desaparecen inmediatamente de todo internet.', correct: false }
+        ]
+      },
+      {
+        id: 'netiqueta',
+        title: 'Netiqueta',
+        icon: 'fa-comments',
+        color: 'from-cyan-500 to-blue-600',
+        textColor: 'text-cyan-400',
+        description: 'Conjunto de normas de comportamiento y respeto en el entorno digital. Trata a los demás online con la misma empatía y cortesía que en la vida real.',
+        question: 'Escribir TODO EN MAYÚSCULAS en un chat o foro equivale a:',
+        options: [
+          { text: 'Hablar con entusiasmo.', correct: false },
+          { text: 'Gritar a los demás usuarios.', correct: true }
+        ]
+      },
+      {
+        id: 'seguridad',
+        title: 'Ciberseguridad',
+        icon: 'fa-lock',
+        color: 'from-emerald-500 to-teal-600',
+        textColor: 'text-emerald-400',
+        description: 'Prácticas para proteger tus dispositivos, cuentas y redes contra ataques informáticos. Utiliza contraseñas robustas y autenticación en dos pasos (2FA).',
+        question: '¿Cuál es una contraseña más segura?',
+        options: [
+          { text: 'MiNombre1234', correct: false },
+          { text: 'G@to#39$AzulNube', correct: true }
+        ]
+      },
+      {
+        id: 'fakenews',
+        title: 'Pensamiento Crítico',
+        icon: 'fa-brain',
+        color: 'from-purple-500 to-indigo-600',
+        textColor: 'text-purple-400',
+        description: 'Capacidad de analizar y cuestionar la veracidad de la información en línea antes de creerla o compartirla, evitando la propagación de Fake News.',
+        question: 'Antes de compartir una noticia impactante debes:',
+        options: [
+          { text: 'Verificar la fuente y buscar la noticia en medios confiables.', correct: true },
+          { text: 'Compartirla rápido para ser el primero en avisar.', correct: false }
+        ]
+      },
+      {
+        id: 'privacidad',
+        title: 'Privacidad Digital',
+        icon: 'fa-user-shield',
+        color: 'from-rose-500 to-pink-600',
+        textColor: 'text-rose-400',
+        description: 'Derecho a controlar quién accede a tu información personal. Configura siempre el nivel de privacidad de tus perfiles en redes sociales.',
+        question: '¿Debes publicar tu ubicación exacta o colegio en tiempo real?',
+        options: [
+          { text: 'No, pone en riesgo tu seguridad física e identidad.', correct: true },
+          { text: 'Sí, para que todos tus seguidores sepan dónde estás.', correct: false }
+        ]
+      },
+      {
+        id: 'empatia',
+        title: 'Empatía & Anti-Acoso',
+        icon: 'fa-heart-circle-bolt',
+        color: 'from-red-500 to-orange-500',
+        textColor: 'text-red-400',
+        description: 'Reconocer que hay personas reales detrás de las pantallas. Si presencias ciberacoso (cyberbullying), apoya a la víctima y denuncia la agresión.',
+        question: 'Si ves que alguien sufre burlas en un grupo virtual, debes:',
+        options: [
+          { text: 'Guardar silencio para no involucrarte.', correct: false },
+          { text: 'No sumarte, apoyar a la persona y reportar la conducta.', correct: true }
+        ]
+      },
+      {
+        id: 'derechos',
+        title: 'Derechos Digitales',
+        icon: 'fa-scale-balanced',
+        color: 'from-blue-500 to-cyan-500',
+        textColor: 'text-blue-400',
+        description: 'Garantías para que las personas accedan, usen, creen y publiquen medios digitales en libertad, igualdad de condiciones y con respeto a sus datos.',
+        question: '¿Tienes derecho al "Olvido Digital" en la red?',
+        options: [
+          { text: 'Sí, a solicitar la eliminación de datos personales desactualizados.', correct: true },
+          { text: 'No, todo lo subido le pertenece a los buscadores.', correct: false }
+        ]
+      },
+      {
+        id: 'bienestar',
+        title: 'Bienestar Digital',
+        icon: 'fa-leaf',
+        color: 'from-lime-500 to-emerald-600',
+        textColor: 'text-lime-400',
+        description: 'Mantener una relación saludable con la tecnología, equilibrando el tiempo frente a las pantallas con el descanso, actividad física y relaciones presenciales.',
+        question: 'Usar pantallas justo antes de dormir puede ocasionar:',
+        options: [
+          { text: 'Trastornos del sueño por la luz azul e hiperestimulación.', correct: true },
+          { text: 'Un descanso más profundo y reparador.', correct: false }
+        ]
+      },
+      {
+        id: 'grooming',
+        title: 'Prevención de Engaños',
+        icon: 'fa-user-secret',
+        color: 'from-slate-500 to-slate-700',
+        textColor: 'text-slate-300',
+        description: 'Estar alerta ante extraños que buscan ganarse la confianza en línea con identidades falsas. No aceptes solicitudes de desconocidos.',
+        question: 'Si una persona desconocida te pide fotos o encontrarse a solas:',
+        options: [
+          { text: 'Informa inmediatamente a un adulto de confianza o tutor.', correct: true },
+          { text: 'Acepta si parece amable en su foto de perfil.', correct: false }
+        ]
+      },
+      {
+        id: 'licencias',
+        title: 'Propiedad Intelectual',
+        icon: 'fa-copyright',
+        color: 'from-violet-500 to-purple-700',
+        textColor: 'text-violet-400',
+        description: 'Respetar la autoría de trabajos, imágenes y música creados por otros. Utiliza licencias libres (Creative Commons) o da los créditos correspondientes.',
+        question: 'Copiar un texto de internet y entregarlo como propio se llama:',
+        options: [
+          { text: 'Investigación eficiente.', correct: false },
+          { text: 'Plagio y vulnera los derechos de autor.', correct: true }
+        ]
+      }
+    ];
+
+    /* --- AUDIO SYNTHESIZER (Web Audio API) --- */
+    class SoundEffects {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      }
+
+      playFlip() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+
+      playMatch() {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+          gain.gain.setValueAtTime(0.15, now + idx * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.06 + 0.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.06);
+          osc.stop(now + idx * 0.06 + 0.2);
+        });
+      }
+
+      playShift() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, this.ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.15);
+      }
+
+      playMismatch() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+        osc.frequency.setValueAtTime(160, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.25);
+      }
+    }
+
+    const sound = new SoundEffects();
+
+    /* --- GAME STATE VARIABLES --- */
+    let cardsArray = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let totalPairs = 8;
+    let moves = 0;
+    let score = 0;
+    let streak = 0;
+    let isBoardLocked = false;
+    let gameTimer = null;
+    let secondsElapsed = 0;
+    let gameStarted = false;
+    let activeConceptForQuiz = null;
+
+    /* --- DOM ELEMENTS --- */
+    const gameGrid = document.getElementById('game-grid');
+    const movesEl = document.getElementById('moves-count');
+    const pairsEl = document.getElementById('pairs-count');
+    const timerEl = document.getElementById('timer');
+    const scoreEl = document.getElementById('score-text');
+    const powerBar = document.getElementById('power-bar');
+    const rankBadge = document.getElementById('rank-badge');
+    const modeSelect = document.getElementById('mode-select');
+    const modeDesc = document.getElementById('mode-desc');
+    const difficultySelect = document.getElementById('difficulty-select');
+    const streakTag = document.getElementById('streak-tag');
+    const streakNum = document.getElementById('streak-num');
+    const toast = document.getElementById('event-toast');
+    const toastMsg = document.getElementById('toast-msg');
+
+    /* --- INITIALIZATION & EVENT LISTENERS --- */
+    window.addEventListener('DOMContentLoaded', () => {
+      initGame();
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      document.getElementById('restart-btn').addEventListener('click', () => initGame());
+      
+      document.getElementById('sound-btn').addEventListener('click', (e) => {
+        sound.enabled = !sound.enabled;
+        const icon = e.currentTarget.querySelector('i');
+        icon.className = sound.enabled ? 'fa-solid fa-volume-high text-lg' : 'fa-solid fa-volume-xmark text-lg text-rose-400';
+      });
+
+      document.getElementById('info-btn').addEventListener('click', () => toggleModal('info-modal', true));
+      document.getElementById('close-info-btn').addEventListener('click', () => toggleModal('info-modal', false));
+      document.getElementById('start-rules-btn').addEventListener('click', () => toggleModal('info-modal', false));
+
+      document.getElementById('close-modal-btn').addEventListener('click', () => {
+        toggleModal('concept-modal', false);
+        checkVictoryCondition();
+      });
+
+      document.getElementById('victory-replay-btn').addEventListener('click', () => {
+        toggleModal('victory-modal', false);
+        initGame();
+      });
+
+      modeSelect.addEventListener('change', (e) => {
+        updateModeDescription(e.target.value);
+        initGame();
+      });
+
+      difficultySelect.addEventListener('change', () => initGame());
+    }
+
+    function updateModeDescription(mode) {
+      if (mode === 'dynamic-click') {
+        modeDesc.textContent = '¡Cuidado! Cada vez que haces clic en una carta, las demás no reveladas cambian de posición en el tablero.';
+      } else if (mode === 'dynamic-mismatch') {
+        modeDesc.textContent = '⚠️ Si fallas una pareja, las cartas ocultas harán un "Glitch" y cambiarán de lugar.';
+      } else {
+        modeDesc.textContent = '🛡️ Juego de memoria tradicional con tablero estático sin reordenamiento.';
+      }
+    }
+
+    /* --- GAME SETUP LOGIC --- */
+    function initGame() {
+      // Reset state
+      clearInterval(gameTimer);
+      gameTimer = null;
+      secondsElapsed = 0;
+      gameStarted = false;
+      moves = 0;
+      score = 0;
+      streak = 0;
+      matchedPairs = 0;
+      flippedCards = [];
+      isBoardLocked = false;
+
+      // Update HUD
+      timerEl.textContent = '00:00';
+      movesEl.textContent = '0';
+      scoreEl.textContent = '0 pts';
+      powerBar.style.width = '0%';
+      streakTag.classList.add('hidden');
+      updateRank(0);
+
+      // Determine pairs count based on difficulty
+      const diff = difficultySelect.value;
+      if (diff === 'easy') totalPairs = 6;
+      else if (diff === 'medium') totalPairs = 8;
+      else if (diff === 'hard') totalPairs = 10;
+
+      pairsEl.textContent = `0 / ${totalPairs}`;
+
+      // Set grid columns dynamically
+      gameGrid.className = 'w-full grid gap-3 sm:gap-4 transition-all duration-300 my-auto ';
+      if (totalPairs === 6) {
+        gameGrid.classList.add('grid-cols-3', 'sm:grid-cols-4', 'max-w-2xl');
+      } else if (totalPairs === 8) {
+        gameGrid.classList.add('grid-cols-4', 'max-w-3xl');
+      } else {
+        gameGrid.classList.add('grid-cols-4', 'sm:grid-cols-5', 'max-w-4xl');
+      }
+
+      // Generate deck from concepts
+      const selectedConcepts = shuffleArray([...CONCEPTS_DATABASE]).slice(0, totalPairs);
+      cardsArray = [];
+
+      selectedConcepts.forEach((concept) => {
+        // Create 2 matching cards for each concept
+        cardsArray.push({
+          uid: Math.random().toString(36).substr(2, 9),
+          conceptId: concept.id,
+          title: concept.title,
+          icon: concept.icon,
+          color: concept.color,
+          isFlipped: false,
+          isMatched: false,
+          data: concept
+        });
+        cardsArray.push({
+          uid: Math.random().toString(36).substr(2, 9),
+          conceptId: concept.id,
+          title: concept.title,
+          icon: concept.icon,
+          color: concept.color,
+          isFlipped: false,
+          isMatched: false,
+          data: concept
+        });
+      });
+
+      cardsArray = shuffleArray(cardsArray);
+      renderBoard();
+    }
+
+    function renderBoard() {
+      gameGrid.innerHTML = '';
+      cardsArray.forEach((card, index) => {
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'card-wrapper perspective-1000 aspect-square cursor-pointer';
+        cardWrapper.dataset.uid = card.uid;
+        cardWrapper.dataset.index = index;
+        
+        // CSS order attribute allows seamless position swapping transitions!
+        cardWrapper.style.order = index;
+
+        cardWrapper.innerHTML = `
+          <div class="card-inner w-full h-full transform-style-3d relative rounded-2xl shadow-lg border border-slate-700/60 transition-transform duration-500 ${card.isFlipped || card.isMatched ? 'rotate-y-180' : ''}">
+            
+            <!-- CARD FRONT (HIDDEN BACKCOVER) -->
+            <div class="backface-hidden absolute inset-0 w-full h-full bg-slate-800 hover:bg-slate-750 flex flex-col items-center justify-center p-2 rounded-2xl border border-slate-700/80 group">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900/80 flex items-center justify-center text-cyan-400 group-hover:scale-110 group-hover:text-cyan-300 transition-all shadow-inner border border-slate-700">
+                <i class="fa-solid fa-fingerprint text-xl sm:text-2xl"></i>
+              </div>
+              <span class="text-[10px] sm:text-xs font-semibold text-slate-400 mt-2 tracking-wider uppercase">Ciudadanía</span>
+            </div>
+
+            <!-- CARD REVEALED -->
+            <div class="rotate-y-180 backface-hidden absolute inset-0 w-full h-full bg-slate-850 flex flex-col items-center justify-center p-2 rounded-2xl border-2 ${card.isMatched ? 'border-emerald-400/80 bg-emerald-950/20' : 'border-cyan-500/80'} bg-gradient-to-b from-slate-800 to-slate-900 text-center">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr ${card.color} text-white flex items-center justify-center text-xl sm:text-2xl mb-1 shadow-md">
+                <i class="fa-solid ${card.icon}"></i>
+              </div>
+              <span class="text-xs sm:text-sm font-bold text-slate-100 line-clamp-1">${card.title}</span>
+            </div>
+
+          </div>
+        `;
+
+        cardWrapper.addEventListener('click', () => handleCardClick(card, cardWrapper));
+        gameGrid.appendChild(cardWrapper);
+      });
+    }
+
+    /* --- CARD INTERACTION & DYNAMIC SHUFFLE LOGIC --- */
+    function handleCardClick(card, cardWrapper) {
+      if (isBoardLocked || card.isFlipped || card.isMatched) return;
+
+      if (!gameStarted) {
+        startTimer();
+        gameStarted = true;
+      }
+
+      sound.playFlip();
+
+      // Flip card
+      card.isFlipped = true;
+      const inner = cardWrapper.querySelector('.card-inner');
+      inner.classList.add('rotate-y-180');
+      flippedCards.push({ card, wrapper: cardWrapper });
+
+      const currentMode = modeSelect.value;
+
+      // DYNAMIC MECHANIC: Shift unrevealed cards on click if in dynamic-click mode
+      if (currentMode === 'dynamic-click' && flippedCards.length === 1) {
+        triggerDynamicShift(card.uid);
+      }
+
+      // Check for match when 2 cards are flipped
+      if (flippedCards.length === 2) {
+        moves++;
+        movesEl.textContent = moves;
+        isBoardLocked = true;
+
+        const [cardA, cardB] = flippedCards;
+
+        if (cardA.card.conceptId === cardB.card.conceptId) {
+          // MATCH FOUND
+          handleMatch(cardA, cardB);
+        } else {
+          // MISMATCH
+          handleMismatch(cardA, cardB, currentMode);
+        }
+      }
+    }
+
+    /* Dynamic Algorithm Shift Mechanic */
+    function triggerDynamicShift(excludeUid = null) {
+      sound.playShift();
+      showToast('¡El Algoritmo cambió las cartas no reveladas!');
+
+      // Get unrevealed, unmatched cards
+      const availableIndices = [];
+      cardsArray.forEach((c, idx) => {
+        if (!c.isMatched && !c.isFlipped && c.uid !== excludeUid) {
+          availableIndices.push(idx);
+        }
+      });
+
+      if (availableIndices.length < 2) return;
+
+      // Shuffle order among unrevealed cards
+      const shuffledIndices = shuffleArray([...availableIndices]);
+      
+      const wrappers = Array.from(gameGrid.children);
+      availableIndices.forEach((originalIdx, i) => {
+        const wrapper = wrappers.find(w => parseInt(w.dataset.index) === originalIdx);
+        if (wrapper) {
+          const newOrder = shuffledIndices[i];
+          wrapper.style.order = newOrder;
+          
+          // Add subtle animation effect
+          wrapper.classList.add('animate-glitch');
+          setTimeout(() => wrapper.classList.remove('animate-glitch'), 300);
+        }
+      });
+    }
+
+    function handleMatch(cardA, cardB) {
+      sound.playMatch();
+      cardA.card.isMatched = true;
+      cardB.card.isMatched = true;
+
+      matchedPairs++;
+      streak++;
+      pairsEl.textContent = `${matchedPairs} / ${totalPairs}`;
+
+      // Update score with streak multiplier
+      const basePoints = 200;
+      const bonus = streak > 1 ? streak * 50 : 0;
+      score += basePoints + bonus;
+      scoreEl.textContent = `${score} pts`;
+
+      if (streak > 1) {
+        streakNum.textContent = streak;
+        streakTag.classList.remove('hidden');
+      }
+
+      updatePowerBar();
+
+      // Set matched visuals
+      setTimeout(() => {
+        [cardA.wrapper, cardB.wrapper].forEach(w => {
+          const inner = w.querySelector('.card-inner');
+          inner.children[1].classList.add('border-emerald-400', 'bg-emerald-950/30');
+        });
+        
+        flippedCards = [];
+        isBoardLocked = false;
+
+        // Display Educational Modal
+        showConceptModal(cardA.card.data);
+      }, 500);
+    }
+
+    function handleMismatch(cardA, cardB, currentMode) {
+      sound.playMismatch();
+      streak = 0;
+      streakTag.classList.add('hidden');
+
+      setTimeout(() => {
+        // Unflip cards
+        cardA.card.isFlipped = false;
+        cardB.card.isFlipped = false;
+        cardA.wrapper.querySelector('.card-inner').classList.remove('rotate-y-180');
+        cardB.wrapper.querySelector('.card-inner').classList.remove('rotate-y-180');
+
+        flippedCards = [];
+        isBoardLocked = false;
+
+        // If mode is mismatch shift, trigger shift now
+        if (currentMode === 'dynamic-mismatch') {
+          triggerDynamicShift();
+        }
+      }, 1000);
+    }
+
+    /* --- CONCEPT POPUP & MINI QUIZ --- */
+    function showConceptModal(concept) {
+      activeConceptForQuiz = concept;
+
+      document.getElementById('modal-title').textContent = concept.title;
+      document.getElementById('modal-description').textContent = concept.description;
+      
+      const iconEl = document.getElementById('modal-icon');
+      iconEl.className = `fa-solid ${concept.icon} ${concept.textColor}`;
+      
+      const quizQuestion = document.getElementById('quiz-question');
+      const quizOptions = document.getElementById('quiz-options');
+      const quizFeedback = document.getElementById('quiz-feedback');
+
+      quizFeedback.className = 'hidden text-xs font-semibold mt-2 text-center p-1.5 rounded';
+      quizQuestion.textContent = concept.question;
+      quizOptions.innerHTML = '';
+
+      concept.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'p-2.5 text-xs text-left rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-2';
+        btn.innerHTML = `<span class="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center font-bold text-[10px] text-indigo-400">${idx+1}</span> <span>${opt.text}</span>`;
+        
+        btn.addEventListener('click', () => handleQuizAnswer(opt.correct, btn, quizOptions, quizFeedback));
+        quizOptions.appendChild(btn);
+      });
+
+      toggleModal('concept-modal', true);
+    }
+
+    function handleQuizAnswer(isCorrect, selectedBtn, container, feedback) {
+      // Disable options after answer
+      Array.from(container.children).forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        selectedBtn.classList.add('bg-emerald-950/80', 'border-emerald-500', 'text-emerald-300');
+        feedback.textContent = '¡Correcto! +100 Puntos extra de reputación digital.';
+        feedback.className = 'text-xs font-semibold mt-2 text-center p-2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 block';
+        score += 100;
+        scoreEl.textContent = `${score} pts`;
+        updatePowerBar();
+      } else {
+        selectedBtn.classList.add('bg-rose-950/80', 'border-rose-500', 'text-rose-300');
+        feedback.textContent = 'Respuesta incorrecta. ¡Sigue aprendiendo!';
+        feedback.className = 'text-xs font-semibold mt-2 text-center p-2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 block';
+      }
+    }
+
+    /* --- HUD & RANK PROGRESSION --- */
+    function updatePowerBar() {
+      const percentage = Math.min(100, Math.round((matchedPairs / totalPairs) * 100));
+      powerBar.style.width = `${percentage}%`;
+      updateRank(score);
+    }
+
+    function updateRank(currentScore) {
+      if (currentScore >= 2000) {
+        rankBadge.textContent = '🛡️ Guardián del Ciberespacio';
+        rankBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-purple-950 text-purple-300 border border-purple-700';
+      } else if (currentScore >= 1200) {
+        rankBadge.textContent = '💡 Ciudadano Experto';
+        rankBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-950 text-indigo-300 border border-indigo-700';
+      } else if (currentScore >= 600) {
+        rankBadge.textContent = '🔍 Navegante Consciente';
+        rankBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-700';
+      } else {
+        rankBadge.textContent = '🌱 Navegante Novato';
+        rankBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-cyan-950 text-cyan-400 border border-cyan-800';
+      }
+    }
+
+    function startTimer() {
+      gameTimer = setInterval(() => {
+        secondsElapsed++;
+        const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+        const secs = String(secondsElapsed % 60).padStart(2, '0');
+        timerEl.textContent = `${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function checkVictoryCondition() {
+      if (matchedPairs === totalPairs) {
+        clearInterval(gameTimer);
+        
+        document.getElementById('final-score').textContent = `${score} pts`;
+        document.getElementById('final-time').textContent = timerEl.textContent;
+        document.getElementById('final-moves').textContent = moves;
+        document.getElementById('final-rank').textContent = rankBadge.textContent;
+
+        setTimeout(() => {
+          toggleModal('victory-modal', true);
+        }, 400);
+      }
+    }
+
+    /* --- HELPER UTILITIES --- */
+    function shuffleArray(arr) {
+      const array = [...arr];
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0', '-translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-4');
+      }, 1800);
+    }
+
+    function toggleModal(modalId, show) {
+      const modal = document.getElementById(modalId);
+      if (show) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.firstElementChild.classList.remove('scale-95');
+        modal.firstElementChild.classList.add('scale-100');
+      } else {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.firstElementChild.classList.remove('scale-100');
+        modal.firstElementChild.classList.add('scale-95');
+      }
+    }
+  </script>
+</body>
+</html>
